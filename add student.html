@@ -24,19 +24,37 @@
     background:#fff; font-size:0.95rem; transition:border-color .15s, box-shadow .15s;
   }
   .field-input:focus{ outline:none; border-color:var(--forest-mid); box-shadow:0 0 0 3px rgba(44,107,79,0.15); }
+  .field-input.invalid{ border-color:#DC2626; box-shadow:0 0 0 3px rgba(220,38,38,0.1); }
+  .field-error{ font-size:0.78rem; color:#DC2626; margin-top:0.25rem; display:none; }
+  .field-error.show{ display:block; }
   .section-card{ background:#fff; border:1px solid var(--line); border-radius:1rem; }
   .leaf-seal{
     width:44px; height:44px; border-radius:50%;
     background:radial-gradient(circle at 30% 30%, #34D399, var(--forest));
     display:flex; align-items:center; justify-content:center; flex-shrink:0;
   }
+  .step-panel{ display:none; }
+  .step-panel.active{ display:block; }
+
+  .stepper{ display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:1.75rem; }
+  .step-dot{
+    width:2rem; height:2rem; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:0.82rem; font-weight:700; font-family:'Kanit',sans-serif;
+    background:#fff; border:2px solid var(--line); color:#9CA9A2; transition:all .2s;
+  }
+  .step-dot.active{ background:var(--forest); border-color:var(--forest); color:#fff; }
+  .step-dot.done{ background:var(--forest-mid); border-color:var(--forest-mid); color:#fff; }
+  .step-label{ font-size:0.72rem; color:#6B8579; margin-top:0.35rem; text-align:center; }
+  .step-label.active{ color:var(--forest); font-weight:600; }
+  .step-connector{ width:2.5rem; height:2px; background:var(--line); margin-bottom:1.3rem; }
+  .step-connector.done{ background:var(--forest-mid); }
 </style>
 </head>
 <body class="min-h-screen">
 
 <!-- ===== CONFIG: แก้ URL นี้เป็น Web App URL ของ Apps Script หลัง deploy ===== -->
 <script>
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwBzxBxYw7wuz5nSKgU33q3Q5P95MfSr6KN38TE0E8RLm6fz4XKqrF8gDyFT03AAGxxiQ/exec';
 </script>
 
 <header class="border-b border-[var(--line)] bg-white">
@@ -63,18 +81,39 @@
       หากกรอกข้อมูลผิดพลาดหลังส่งแล้ว กรุณาติดต่อเจ้าหน้าที่ภาควิชาเพื่อขอแก้ไข
     </p>
 
-    <form id="studentForm" class="space-y-5">
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="flex flex-col items-center">
+        <div class="step-dot active" data-dot="1">1</div>
+        <div class="step-label active" data-label="1">ข้อมูลส่วนตัว</div>
+      </div>
+      <div class="step-connector" data-connector="1"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot" data-dot="2">2</div>
+        <div class="step-label" data-label="2">การติดต่อ</div>
+      </div>
+      <div class="step-connector" data-connector="2"></div>
+      <div class="flex flex-col items-center">
+        <div class="step-dot" data-dot="3">3</div>
+        <div class="step-label" data-label="3">การศึกษา</div>
+      </div>
+    </div>
 
-      <section class="section-card p-5">
+    <form id="studentForm" novalidate>
+
+      <!-- ===== STEP 1: ข้อมูลส่วนตัว ===== -->
+      <section class="section-card p-5 step-panel active" data-step="1">
         <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลส่วนตัว</p>
         <div class="grid sm:grid-cols-2 gap-4">
           <div class="sm:col-span-2">
             <label class="field-label">ชื่อ-นามสกุล</label>
             <input required name="fullName" class="field-input" placeholder="เช่น นายเกษม ศรีสุข">
+            <p class="field-error">กรุณากรอกชื่อ-นามสกุล</p>
           </div>
           <div>
             <label class="field-label">เลขประจำตัวนิสิต</label>
             <input required name="studentId" class="field-input" placeholder="เช่น 6510500001">
+            <p class="field-error">กรุณากรอกเลขประจำตัวนิสิต</p>
           </div>
           <div>
             <label class="field-label">เพศ</label>
@@ -84,37 +123,56 @@
               <option>หญิง</option>
               <option>ไม่ระบุ</option>
             </select>
+            <p class="field-error">กรุณาเลือกเพศ</p>
           </div>
           <div>
             <label class="field-label">วันเดือนปีเกิด</label>
             <input required type="date" name="birthDate" class="field-input" id="birthDateInput">
+            <p class="field-error">กรุณาเลือกวันเดือนปีเกิด</p>
           </div>
           <div>
             <label class="field-label">อายุ (ปี)</label>
             <input required type="number" min="15" max="60" name="age" class="field-input" id="ageInput" placeholder="คำนวณอัตโนมัติจากวันเกิด">
+            <p class="field-error">กรุณากรอกอายุ</p>
           </div>
           <div class="sm:col-span-2">
             <label class="field-label">เลขที่บัตรประชาชน (13 หลัก)</label>
             <input required name="nationalId" maxlength="13" pattern="[0-9]{13}" class="field-input" placeholder="เลข 13 หลัก ไม่ต้องเว้นวรรค">
+            <p class="field-error">เลขที่บัตรประชาชนต้องเป็นตัวเลข 13 หลัก</p>
           </div>
         </div>
       </section>
 
-      <section class="section-card p-5">
-        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">การติดต่อ</p>
+      <!-- ===== STEP 2: การติดต่อ ===== -->
+      <section class="section-card p-5 step-panel" data-step="2">
+        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลติดต่อนิสิต</p>
+        <div class="grid sm:grid-cols-2 gap-4 mb-6">
+          <div>
+            <label class="field-label">เบอร์โทรศัพท์นิสิต</label>
+            <input required name="studentPhone" class="field-input" placeholder="เช่น 0812345678">
+            <p class="field-error">กรุณากรอกเบอร์โทรศัพท์นิสิต</p>
+          </div>
+          <div>
+            <label class="field-label">ไอดีไลน์นิสิต</label>
+            <input name="lineId" class="field-input" placeholder="เช่น kasem_env">
+          </div>
+        </div>
+
+        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลผู้ปกครอง</p>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="field-label">ชื่อผู้ปกครอง</label>
             <input name="guardianName" class="field-input" placeholder="ชื่อ-นามสกุลผู้ปกครอง">
           </div>
           <div>
-            <label class="field-label">เบอร์โทรศัพท์</label>
-            <input required name="phone" class="field-input" placeholder="เช่น 0812345678">
+            <label class="field-label">เบอร์โทรศัพท์ผู้ปกครอง</label>
+            <input name="guardianPhone" class="field-input" placeholder="เช่น 0898765432">
           </div>
         </div>
       </section>
 
-      <section class="section-card p-5">
+      <!-- ===== STEP 3: ข้อมูลทางการศึกษา ===== -->
+      <section class="section-card p-5 step-panel" data-step="3">
         <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลทางการศึกษา</p>
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
@@ -130,14 +188,17 @@
               <option>ศรีราชา</option>
               <option>เฉลิมพระเกียรติ จังหวัดสกลนคร</option>
             </select>
+            <p class="field-error">กรุณาเลือกวิทยาเขต</p>
           </div>
           <div>
             <label class="field-label">ภาควิชา</label>
             <input required name="department" class="field-input" placeholder="เช่น ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม">
+            <p class="field-error">กรุณากรอกภาควิชา</p>
           </div>
           <div>
             <label class="field-label">อาจารย์ที่ปรึกษา</label>
             <input required name="advisorName" class="field-input" placeholder="ชื่อ-นามสกุลอาจารย์ที่ปรึกษา">
+            <p class="field-error">กรุณากรอกชื่ออาจารย์ที่ปรึกษา</p>
           </div>
           <div>
             <label class="field-label">รหัสอาจารย์ที่ปรึกษา</label>
@@ -146,12 +207,23 @@
         </div>
       </section>
 
-      <p id="errorMsg" class="text-sm text-red-600 hidden"></p>
+      <p id="errorMsg" class="text-sm text-red-600 hidden mt-4"></p>
 
-      <button type="submit" id="submitBtn"
-        class="w-full bg-[var(--forest)] hover:bg-[var(--forest-mid)] text-white font-medium rounded-xl py-3 transition-colors">
-        บันทึกข้อมูล
-      </button>
+      <!-- Nav buttons -->
+      <div class="flex items-center gap-3 mt-6">
+        <button type="button" id="backBtn"
+          class="hidden px-5 py-3 rounded-xl border-2 border-[var(--line)] text-[var(--forest)] font-medium">
+          ย้อนกลับ
+        </button>
+        <button type="button" id="nextBtn"
+          class="flex-1 bg-[var(--forest)] hover:bg-[var(--forest-mid)] text-white font-medium rounded-xl py-3 transition-colors">
+          ถัดไป
+        </button>
+        <button type="submit" id="submitBtn"
+          class="hidden flex-1 bg-[var(--forest)] hover:bg-[var(--forest-mid)] text-white font-medium rounded-xl py-3 transition-colors">
+          บันทึกข้อมูล
+        </button>
+      </div>
     </form>
   </div>
 
@@ -171,6 +243,16 @@
 </footer>
 
 <script>
+  const TOTAL_STEPS = 3;
+  let currentStep = 1;
+
+  const form = document.getElementById('studentForm');
+  const errorMsg = document.getElementById('errorMsg');
+  const submitBtn = document.getElementById('submitBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const backBtn = document.getElementById('backBtn');
+
+  // ---------- อายุอัตโนมัติจากวันเกิด ----------
   const birthInput = document.getElementById('birthDateInput');
   const ageInput = document.getElementById('ageInput');
   birthInput.addEventListener('change', () => {
@@ -183,19 +265,76 @@
     if (age > 0 && age < 100) ageInput.value = age;
   });
 
-  const form = document.getElementById('studentForm');
-  const errorMsg = document.getElementById('errorMsg');
-  const submitBtn = document.getElementById('submitBtn');
+  // ---------- Stepper navigation ----------
+  function goToStep(step) {
+    document.querySelectorAll('.step-panel').forEach(p => {
+      p.classList.toggle('active', Number(p.dataset.step) === step);
+    });
+    document.querySelectorAll('.step-dot').forEach(d => {
+      const n = Number(d.dataset.dot);
+      d.classList.toggle('active', n === step);
+      d.classList.toggle('done', n < step);
+      d.textContent = n < step ? '✓' : n;
+    });
+    document.querySelectorAll('.step-label').forEach(l => {
+      l.classList.toggle('active', Number(l.dataset.label) === step);
+    });
+    document.querySelectorAll('.step-connector').forEach(c => {
+      c.classList.toggle('done', Number(c.dataset.connector) < step);
+    });
+    backBtn.classList.toggle('hidden', step === 1);
+    nextBtn.classList.toggle('hidden', step === TOTAL_STEPS);
+    submitBtn.classList.toggle('hidden', step !== TOTAL_STEPS);
+    currentStep = step;
+    errorMsg.classList.add('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
+  function validateStep(step) {
+    const panel = document.querySelector(`.step-panel[data-step="${step}"]`);
+    let valid = true;
+
+    panel.querySelectorAll('input, select').forEach(field => {
+      field.classList.remove('invalid');
+      const errorEl = field.parentElement.querySelector('.field-error');
+      if (errorEl) errorEl.classList.remove('show');
+    });
+
+    panel.querySelectorAll('[required]').forEach(field => {
+      if (!field.value || !field.value.trim()) {
+        valid = false;
+        field.classList.add('invalid');
+        const errorEl = field.parentElement.querySelector('.field-error');
+        if (errorEl) errorEl.classList.add('show');
+      }
+    });
+
+    const nationalIdField = panel.querySelector('[name="nationalId"]');
+    if (nationalIdField && nationalIdField.value && !/^[0-9]{13}$/.test(nationalIdField.value.trim())) {
+      valid = false;
+      nationalIdField.classList.add('invalid');
+      const errorEl = nationalIdField.parentElement.querySelector('.field-error');
+      if (errorEl) errorEl.classList.add('show');
+    }
+
+    return valid;
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (!validateStep(currentStep)) return;
+    if (currentStep < TOTAL_STEPS) goToStep(currentStep + 1);
+  });
+
+  backBtn.addEventListener('click', () => {
+    if (currentStep > 1) goToStep(currentStep - 1);
+  });
+
+  // ---------- Submit ----------
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errorMsg.classList.add('hidden');
 
-    const nationalId = form.nationalId.value.trim();
-    if (!/^[0-9]{13}$/.test(nationalId)) {
-      showError('เลขที่บัตรประชาชนต้องเป็นตัวเลข 13 หลัก');
-      return;
-    }
+    if (!validateStep(TOTAL_STEPS)) return;
 
     const payload = Object.fromEntries(new FormData(form).entries());
 
@@ -232,6 +371,7 @@
     form.reset();
     document.getElementById('successView').classList.add('hidden');
     document.getElementById('formView').classList.remove('hidden');
+    goToStep(1);
   }
 </script>
 
