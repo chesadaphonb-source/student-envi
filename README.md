@@ -1,9 +1,8 @@
-# student-envi
 # ระบบบันทึกข้อมูลนิสิต — คู่มือติดตั้ง
 
 ไฟล์ในโปรเจกต์นี้:
-- `index.html` — ฟอร์มสาธารณะให้นิสิตกรอกข้อมูลเอง (ไม่ต้อง login)
-- `dashboard.html` — แดชบอร์ดสำหรับเจ้าหน้าที่ (login ด้วย Google บัญชี @ku.th เท่านั้น)
+- `index.html` — แดชบอร์ดสำหรับเจ้าหน้าที่ (หน้าแรกของเว็บไซต์ ต้องกรอกรหัสผ่านก่อนเข้าดู)
+- `add-student.html` — ฟอร์มสาธารณะให้นิสิตกรอกข้อมูลเอง (ไม่ต้อง login) เข้าถึงได้จากปุ่ม "เพิ่มข้อมูลนิสิต" ในแดชบอร์ด
 - `Code.gs` — Apps Script backend (เขียน/อ่านข้อมูลใน Google Sheet)
 - `appsscript.json` — manifest ของ Apps Script
 
@@ -39,16 +38,16 @@
 5. คัดลอก **Web app URL** (ลงท้ายด้วย `/exec`)
 6. นำ URL นี้ไปแทนที่ `REPLACE_WITH_YOUR_DEPLOYMENT_ID` ใน **สองที่**:
    - `index.html` → ตัวแปร `APPS_SCRIPT_URL`
-   - `dashboard.html` → ตัวแปร `APPS_SCRIPT_URL`
+   - `add-student.html` → ตัวแปร `APPS_SCRIPT_URL`
 
 > ทุกครั้งที่แก้โค้ดใน Apps Script ภายหลัง ให้กด **Deploy → Manage deployments → แก้ไข (ไอคอนดินสอ) → Version: New version → Deploy** เพื่อให้ URL เดิมใช้โค้ดใหม่ (ไม่ต้องเปลี่ยน URL ในหน้าเว็บอีก)
 
 ## ขั้นตอนที่ 4 — Deploy หน้าเว็บบน GitHub Pages
 
-1. สร้าง repository ใหม่ใน GitHub แล้วอัปโหลด `index.html` และ `dashboard.html`
+1. สร้าง repository ใหม่ใน GitHub แล้วอัปโหลด `index.html` และ `add-student.html`
 2. ไปที่ **Settings → Pages** → เลือก branch ที่ต้องการ (เช่น `main`) → Save
-3. เข้าถึงฟอร์มได้ที่ `https://yourname.github.io/repo/index.html`
-4. เข้าถึงแดชบอร์ดได้ที่ `https://yourname.github.io/repo/dashboard.html`
+3. เข้าถึงแดชบอร์ดได้ที่ `https://yourname.github.io/repo/` (เป็นหน้าแรก)
+4. เข้าถึงฟอร์มกรอกข้อมูลนิสิตได้ที่ `https://yourname.github.io/repo/add-student.html` หรือกดปุ่ม "เพิ่มข้อมูลนิสิต" จากในแดชบอร์ด
 
 ---
 
@@ -90,4 +89,4 @@
 ## ข้อจำกัดที่ควรรู้
 
 - ปัจจุบันฟีเจอร์ "เจ้าหน้าที่ตรวจ/แก้ไข" ยังไม่ได้แบ่งสิทธิ์ตามภาควิชา/อาจารย์ที่ปรึกษา (บุคลากร @ku.th ทุกคนที่เข้าแดชบอร์ดเห็นข้อมูลทั้งหมด) — หากต้องการแบ่งสิทธิ์ละเอียดกว่านี้ (เช่น อาจารย์เห็นเฉพาะนิสิตในที่ปรึกษาของตน) แจ้งมาได้ จะเพิ่ม logic กรองสิทธิ์ในฝั่ง `Code.gs` ให้
-- ฟอร์มสาธารณะไม่มีการยืนยันตัวตนของผู้กรอก (อาจไม่ใช่ตัวนิสิตเองก็ได้) — ถ้าต้องการให้นิสิต login ด้วยอีเมล ku.th ก่อนกรอกฟอร์มด้วย แจ้งได้ จะเพิ่ม Google Sign-In ในหน้า `index.html` เช่นเดียวกับ dashboard
+- ฟอร์มสาธารณะไม่มีการยืนยันตัวตนของผู้กรอก (อาจไม่ใช่ตัวนิสิตเองก็ได้) — ถ้าต้องการให้นิสิต login ด้วยอีเมล ku.th ก่อนกรอกฟอร์มด้วย แจ้งได้ จะเพิ่ม Google Sign-In ในหน้า `add-student.html` เช่นเดียวกับแดชบอร์ด
