@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>บันทึกข้อมูลนิสิต</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --forest:#059669;
+    --forest-mid:#10B981;
+    --sage:#F0FDF4;
+    --gold:#F59E0B;
+    --ink:#0F2E22;
+    --line:#BBF3D4;
+  }
+  body{ font-family:'Noto Sans Thai',sans-serif; background:var(--sage); color:var(--ink); }
+  .font-display{ font-family:'Kanit',sans-serif; }
+  .field-label{ font-size:0.83rem; font-weight:600; color:var(--forest); margin-bottom:0.3rem; display:block; }
+  .field-input{
+    width:100%; border:1.5px solid var(--line); border-radius:0.6rem; padding:0.65rem 0.85rem;
+    background:#fff; font-size:0.95rem; transition:border-color .15s, box-shadow .15s;
+  }
+  .field-input:focus{ outline:none; border-color:var(--forest-mid); box-shadow:0 0 0 3px rgba(44,107,79,0.15); }
+  .section-card{ background:#fff; border:1px solid var(--line); border-radius:1rem; }
+  .leaf-seal{
+    width:44px; height:44px; border-radius:50%;
+    background:radial-gradient(circle at 30% 30%, #34D399, var(--forest));
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- ===== CONFIG: แก้ URL นี้เป็น Web App URL ของ Apps Script หลัง deploy ===== -->
+<script>
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/REPLACE_WITH_YOUR_DEPLOYMENT_ID/exec';
+</script>
+
+<header class="border-b border-[var(--line)] bg-white">
+  <div class="max-w-3xl mx-auto px-6 py-5 flex items-center gap-3">
+    <div class="leaf-seal">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 20C4 12 9 5 20 4C20 14 13 19 4 20Z" stroke="white" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M6 18C9 14 12 11 17 7" stroke="white" stroke-width="1.4" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <p class="font-display font-semibold text-[var(--forest)] leading-tight">แบบบันทึกข้อมูลนิสิต</p>
+      <p class="text-xs text-gray-500">คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์</p>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-6 py-8">
+
+  <div id="formView">
+    <p class="text-sm text-gray-600 mb-6 leading-relaxed">
+      กรุณากรอกข้อมูลของนิสิตให้ครบถ้วนและถูกต้อง ข้อมูลนี้จะถูกใช้เพื่อการติดต่อและบริหารงานภายในคณะเท่านั้น
+      หากกรอกข้อมูลผิดพลาดหลังส่งแล้ว กรุณาติดต่อเจ้าหน้าที่ภาควิชาเพื่อขอแก้ไข
+    </p>
+
+    <form id="studentForm" class="space-y-5">
+
+      <section class="section-card p-5">
+        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลส่วนตัว</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="sm:col-span-2">
+            <label class="field-label">ชื่อ-นามสกุล</label>
+            <input required name="fullName" class="field-input" placeholder="เช่น นายเกษม ศรีสุข">
+          </div>
+          <div>
+            <label class="field-label">เลขประจำตัวนิสิต</label>
+            <input required name="studentId" class="field-input" placeholder="เช่น 6510500001">
+          </div>
+          <div>
+            <label class="field-label">เพศ</label>
+            <select required name="gender" class="field-input">
+              <option value="">— เลือก —</option>
+              <option>ชาย</option>
+              <option>หญิง</option>
+              <option>ไม่ระบุ</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">วันเดือนปีเกิด</label>
+            <input required type="date" name="birthDate" class="field-input" id="birthDateInput">
+          </div>
+          <div>
+            <label class="field-label">อายุ (ปี)</label>
+            <input required type="number" min="15" max="60" name="age" class="field-input" id="ageInput" placeholder="คำนวณอัตโนมัติจากวันเกิด">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="field-label">เลขที่บัตรประชาชน (13 หลัก)</label>
+            <input required name="nationalId" maxlength="13" pattern="[0-9]{13}" class="field-input" placeholder="เลข 13 หลัก ไม่ต้องเว้นวรรค">
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card p-5">
+        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">การติดต่อ</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label">ชื่อผู้ปกครอง</label>
+            <input name="guardianName" class="field-input" placeholder="ชื่อ-นามสกุลผู้ปกครอง">
+          </div>
+          <div>
+            <label class="field-label">เบอร์โทรศัพท์</label>
+            <input required name="phone" class="field-input" placeholder="เช่น 0812345678">
+          </div>
+        </div>
+      </section>
+
+      <section class="section-card p-5">
+        <p class="font-display font-semibold text-[var(--forest)] mb-4 text-sm tracking-wide">ข้อมูลทางการศึกษา</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label">คณะ</label>
+            <input name="faculty" class="field-input" value="คณะสิ่งแวดล้อม">
+          </div>
+          <div>
+            <label class="field-label">วิทยาเขต</label>
+            <select required name="campus" class="field-input">
+              <option value="">— เลือก —</option>
+              <option>บางเขน</option>
+              <option>กำแพงแสน</option>
+              <option>ศรีราชา</option>
+              <option>เฉลิมพระเกียรติ จังหวัดสกลนคร</option>
+            </select>
+          </div>
+          <div>
+            <label class="field-label">ภาควิชา</label>
+            <input required name="department" class="field-input" placeholder="เช่น ภาควิชาวิทยาศาสตร์สิ่งแวดล้อม">
+          </div>
+          <div>
+            <label class="field-label">อาจารย์ที่ปรึกษา</label>
+            <input required name="advisorName" class="field-input" placeholder="ชื่อ-นามสกุลอาจารย์ที่ปรึกษา">
+          </div>
+          <div>
+            <label class="field-label">รหัสอาจารย์ที่ปรึกษา</label>
+            <input name="advisorId" class="field-input" placeholder="รหัสประจำตัวอาจารย์ (ถ้ามี)">
+          </div>
+        </div>
+      </section>
+
+      <p id="errorMsg" class="text-sm text-red-600 hidden"></p>
+
+      <button type="submit" id="submitBtn"
+        class="w-full bg-[var(--forest)] hover:bg-[var(--forest-mid)] text-white font-medium rounded-xl py-3 transition-colors">
+        บันทึกข้อมูล
+      </button>
+    </form>
+  </div>
+
+  <div id="successView" class="hidden section-card p-8 text-center">
+    <div class="leaf-seal mx-auto mb-4"></div>
+    <p class="font-display font-semibold text-lg text-[var(--forest)] mb-1">บันทึกข้อมูลเรียบร้อยแล้ว</p>
+    <p class="text-sm text-gray-600 mb-6">ขอบคุณสำหรับการให้ข้อมูล เจ้าหน้าที่จะตรวจสอบความถูกต้องในลำดับถัดไป</p>
+    <button onclick="resetForm()" class="text-sm font-medium text-[var(--forest)] underline">กรอกข้อมูลนิสิตอีกคน</button>
+  </div>
+
+</main>
+
+<footer class="max-w-3xl mx-auto px-6 pb-10 text-xs text-gray-400 text-center">
+  ระบบภายในสำหรับบุคลากรและนิสิตคณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์
+</footer>
+
+<script>
+  const birthInput = document.getElementById('birthDateInput');
+  const ageInput = document.getElementById('ageInput');
+  birthInput.addEventListener('change', () => {
+    if (!birthInput.value) return;
+    const b = new Date(birthInput.value);
+    const now = new Date();
+    let age = now.getFullYear() - b.getFullYear();
+    const m = now.getMonth() - b.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+    if (age > 0 && age < 100) ageInput.value = age;
+  });
+
+  const form = document.getElementById('studentForm');
+  const errorMsg = document.getElementById('errorMsg');
+  const submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errorMsg.classList.add('hidden');
+
+    const nationalId = form.nationalId.value.trim();
+    if (!/^[0-9]{13}$/.test(nationalId)) {
+      showError('เลขที่บัตรประชาชนต้องเป็นตัวเลข 13 หลัก');
+      return;
+    }
+
+    const payload = Object.fromEntries(new FormData(form).entries());
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'กำลังบันทึก...';
+
+    try {
+      const res = await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' }, // เลี่ยง CORS preflight
+        body: JSON.stringify({ action: 'submitStudent', payload })
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showError(data.error || 'เกิดข้อผิดพลาด กรุณาลองใหม่');
+        return;
+      }
+      document.getElementById('formView').classList.add('hidden');
+      document.getElementById('successView').classList.remove('hidden');
+    } catch (err) {
+      showError('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'บันทึกข้อมูล';
+    }
+  });
+
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.classList.remove('hidden');
+  }
+
+  function resetForm() {
+    form.reset();
+    document.getElementById('successView').classList.add('hidden');
+    document.getElementById('formView').classList.remove('hidden');
+  }
+</script>
+
+</body>
+</html>
