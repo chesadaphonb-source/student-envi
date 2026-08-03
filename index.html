@@ -88,13 +88,13 @@
       <select id="filterCampus" class="field-input max-w-[200px]">
         <option value="">ทุกวิทยาเขต</option>
       </select>
-      <a href="add-student.html" target="_blank"
+      <button onclick="openAddModal()"
         class="ml-auto inline-flex items-center gap-1.5 text-sm rounded-lg px-4 py-2 btn-primary font-medium">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round"/>
         </svg>
         เพิ่มข้อมูลนิสิต
-      </a>
+      </button>
       <button onclick="loadStudents()" class="text-sm text-[var(--forest)] font-medium underline">รีเฟรช</button>
     </div>
 
@@ -148,6 +148,21 @@
       <button onclick="closeEditModal()" class="px-4 py-2 text-sm text-gray-500">ยกเลิก</button>
       <button onclick="saveEdit()" class="px-4 py-2 text-sm rounded-lg btn-primary font-medium">บันทึกการแก้ไข</button>
     </div>
+  </div>
+</div>
+
+<!-- ============ ADD STUDENT MODAL (ฝัง add-student.html เป็นกล่องลอย) ============ -->
+<div id="addModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center px-4 py-6 z-50">
+  <div class="card w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-3 border-b border-[var(--line)] flex-shrink-0">
+      <p class="font-display font-semibold text-[var(--forest)]">เพิ่มข้อมูลนิสิต</p>
+      <button onclick="closeAddModal()" class="icon-btn text-gray-400 hover:text-[var(--forest)]" aria-label="ปิด">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </div>
+    <iframe id="addStudentFrame" src="about:blank" class="w-full flex-1 border-0" style="min-height:70vh"></iframe>
   </div>
 </div>
 
@@ -345,6 +360,25 @@
     closeEditModal();
     loadStudents();
   }
+
+  // ---------- ADD STUDENT MODAL (ฝังฟอร์ม add-student.html แบบกล่องลอย) ----------
+  function openAddModal() {
+    const frame = document.getElementById('addStudentFrame');
+    frame.src = 'add-student.html'; // โหลดฟอร์มใหม่ทุกครั้งที่เปิด เพื่อให้เริ่มจากหน้าแรกเสมอ
+    document.getElementById('addModal').classList.remove('hidden');
+  }
+
+  function closeAddModal() {
+    document.getElementById('addModal').classList.add('hidden');
+    document.getElementById('addStudentFrame').src = 'about:blank';
+  }
+
+  // รับสัญญาณจากฟอร์มในกล่องลอยเมื่อบันทึกข้อมูลสำเร็จ แล้วรีเฟรชตารางให้อัตโนมัติ
+  window.addEventListener('message', (e) => {
+    if (e.data && e.data.type === 'studentAdded') {
+      loadStudents();
+    }
+  });
 </script>
 
 </body>
