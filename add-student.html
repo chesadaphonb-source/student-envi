@@ -69,7 +69,7 @@
       <p class="font-display font-semibold text-[var(--forest)] leading-tight">แบบบันทึกข้อมูลนิสิต</p>
       <p class="text-xs text-gray-500">คณะสิ่งแวดล้อม มหาวิทยาลัยเกษตรศาสตร์</p>
     </div>
-    <a href="index.html" class="ml-auto text-sm text-[var(--forest)] font-medium underline">กลับไปที่แดชบอร์ด</a>
+    <a href="index.html" id="backToDashboardHeader" class="ml-auto text-sm text-[var(--forest)] font-medium underline">กลับไปที่แดชบอร์ด</a>
   </div>
 </header>
 
@@ -126,9 +126,20 @@
             <p class="field-error">กรุณาเลือกเพศ</p>
           </div>
           <div>
-            <label class="field-label">วันเดือนปีเกิด</label>
-            <input required type="date" name="birthDate" class="field-input" id="birthDateInput">
-            <p class="field-error">กรุณาเลือกวันเดือนปีเกิด</p>
+            <label class="field-label">วันเดือนปีเกิด (พ.ศ.)</label>
+            <div class="grid grid-cols-3 gap-2" id="birthDateGroup">
+              <select class="field-input" id="bdDay" data-bd-part>
+                <option value="">วัน</option>
+              </select>
+              <select class="field-input" id="bdMonth" data-bd-part>
+                <option value="">เดือน</option>
+              </select>
+              <select class="field-input" id="bdYear" data-bd-part>
+                <option value="">ปี พ.ศ.</option>
+              </select>
+            </div>
+            <input type="hidden" name="birthDate" id="birthDateInput" required>
+            <p class="field-error" id="birthDateError">กรุณาเลือกวันเดือนปีเกิดให้ครบ</p>
           </div>
           <div>
             <label class="field-label">อายุ (ปี)</label>
@@ -232,8 +243,8 @@
     <p class="font-display font-semibold text-lg text-[var(--forest)] mb-1">บันทึกข้อมูลเรียบร้อยแล้ว</p>
     <p class="text-sm text-gray-600 mb-6">ขอบคุณสำหรับการให้ข้อมูล เจ้าหน้าที่จะตรวจสอบความถูกต้องในลำดับถัดไป</p>
     <button onclick="resetForm()" class="text-sm font-medium text-[var(--forest)] underline">กรอกข้อมูลนิสิตอีกคน</button>
-    <span class="text-gray-300 mx-2">·</span>
-    <a href="index.html" class="text-sm font-medium text-[var(--forest)] underline">กลับไปที่แดชบอร์ด</a>
+    <span class="text-gray-300 mx-2" id="backToDashboardSep">·</span>
+    <a href="index.html" id="backToDashboardSuccess" class="text-sm font-medium text-[var(--forest)] underline">กลับไปที่แดชบอร์ด</a>
   </div>
 
 </main>
@@ -244,6 +255,16 @@
 
 <script>
   const TOTAL_STEPS = 3;
+
+  // ถ้าถูกฝังอยู่ใน iframe ของกล่องลอยในแดชบอร์ด ลิงก์ "กลับไปที่แดชบอร์ด" จะซ้ำซ้อนกับปุ่มปิด (X) จึงซ่อนไว้
+  if (window.self !== window.top) {
+    const headerLink = document.getElementById('backToDashboardHeader');
+    const successLink = document.getElementById('backToDashboardSuccess');
+    const successSep = document.getElementById('backToDashboardSep');
+    if (headerLink) headerLink.style.display = 'none';
+    if (successLink) successLink.style.display = 'none';
+    if (successSep) successSep.style.display = 'none';
+  }
   let currentStep = 1;
 
   const form = document.getElementById('studentForm');
@@ -252,18 +273,80 @@
   const nextBtn = document.getElementById('nextBtn');
   const backBtn = document.getElementById('backBtn');
 
-  // ---------- อายุอัตโนมัติจากวันเกิด ----------
+  // ---------- วันเดือนปีเกิด (พ.ศ.) → คำนวณอายุ + สร้างค่า ISO วันเกิด ----------
+  const THAI_MONTHS = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+
+  const bdDay = document.getElementById('bdDay');
+  const bdMonth = document.getElementById('bdMonth');
+  const bdYear = document.getElementById('bdYear');
+  const birthDateError = document.getElementById('birthDateError');
   const birthInput = document.getElementById('birthDateInput');
   const ageInput = document.getElementById('ageInput');
-  birthInput.addEventListener('change', () => {
-    if (!birthInput.value) return;
-    const b = new Date(birthInput.value);
-    const now = new Date();
-    let age = now.getFullYear() - b.getFullYear();
-    const m = now.getMonth() - b.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
-    if (age > 0 && age < 100) ageInput.value = age;
+
+  const nowCE = new Date().getFullYear();
+  const currentBE = nowCE + 543;
+
+  THAI_MONTHS.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i + 1;
+    opt.textContent = name;
+    bdMonth.appendChild(opt);
   });
+
+  // ช่วงปีเกิด: รองรับอายุประมาณ 15-70 ปี เรียงปีล่าสุดก่อน
+  for (let be = currentBE - 15; be >= currentBE - 70; be--) {
+    const opt = document.createElement('option');
+    opt.value = be;
+    opt.textContent = be;
+    bdYear.appendChild(opt);
+  }
+
+  function daysInSelectedMonth() {
+    const month = Number(bdMonth.value);
+    const yearCE = bdYear.value ? Number(bdYear.value) - 543 : nowCE;
+    if (!month) return 31;
+    return new Date(yearCE, month, 0).getDate();
+  }
+
+  function rebuildDayOptions() {
+    const maxDay = daysInSelectedMonth();
+    const prevValue = bdDay.value;
+    bdDay.innerHTML = '<option value="">วัน</option>';
+    for (let d = 1; d <= maxDay; d++) {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = d;
+      bdDay.appendChild(opt);
+    }
+    if (prevValue && Number(prevValue) <= maxDay) bdDay.value = prevValue;
+  }
+  rebuildDayOptions();
+
+  function updateBirthDateAndAge() {
+    rebuildDayOptions();
+    [bdDay, bdMonth, bdYear].forEach(el => el.classList.remove('invalid'));
+    birthDateError.classList.remove('show');
+
+    if (bdDay.value && bdMonth.value && bdYear.value) {
+      const yearCE = Number(bdYear.value) - 543;
+      const iso = `${yearCE}-${String(bdMonth.value).padStart(2, '0')}-${String(bdDay.value).padStart(2, '0')}`;
+      birthInput.value = iso;
+
+      const b = new Date(iso);
+      const now = new Date();
+      let age = now.getFullYear() - b.getFullYear();
+      const m = now.getMonth() - b.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age--;
+      if (age > 0 && age < 100) ageInput.value = age;
+    } else {
+      birthInput.value = '';
+    }
+  }
+
+  [bdDay, bdMonth, bdYear].forEach(el => el.addEventListener('change', updateBirthDateAndAge));
 
   // ---------- Stepper navigation ----------
   function goToStep(step) {
@@ -317,6 +400,13 @@
       if (errorEl) errorEl.classList.add('show');
     }
 
+    const birthDateField = panel.querySelector('#birthDateInput');
+    if (birthDateField && !birthDateField.value) {
+      valid = false;
+      [bdDay, bdMonth, bdYear].forEach(el => el.classList.add('invalid'));
+      birthDateError.classList.add('show');
+    }
+
     return valid;
   }
 
@@ -354,6 +444,11 @@
       }
       document.getElementById('formView').classList.add('hidden');
       document.getElementById('successView').classList.remove('hidden');
+
+      // แจ้งหน้าแดชบอร์ด (ถ้าเปิดอยู่ในกล่องลอย) ให้รีเฟรชตารางอัตโนมัติ
+      if (window.self !== window.top) {
+        window.parent.postMessage({ type: 'studentAdded' }, '*');
+      }
     } catch (err) {
       showError('ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง');
     } finally {
